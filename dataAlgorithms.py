@@ -95,7 +95,6 @@ def knnValidate(data, k):
 
     #print(overallResultsForAllTests)
     return overallResultsForAllTests
-    #print(overallResultsForAllTests)
 
 def editKnn(df, pointsToDrop):
     """

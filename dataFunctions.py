@@ -193,7 +193,7 @@ def crossValidationKby2Classification(df, k=5):
         combinedData = [trainingDataSample1, trainingDataSample2, testData]
 
         #Collect the best parameter over the 5 experiements, this will be 10 sets        
-        testCollector = pd.concat([testCollector, da.knnValidate(combinedData, highestParameter)], axis=0)
+        testCollector = pd.concat([testCollector, da.knnValidate(combinedData, 7)], axis=0)
     #print(parameterCollector)
     testAverage = testCollector.mean()
 
