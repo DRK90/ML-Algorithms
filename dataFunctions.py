@@ -136,7 +136,7 @@ def crossValidationKby2Classification(df, k=5):
     #EDIT KNN will be done first
 
     #First find the best parameters (Dont do this for edited KNN)
-    if 1==0:
+    if 1==1:
         for i in range(k):
             class1 = df[df['class']==4]
             class2 = df[df['class']==2]
@@ -166,7 +166,7 @@ def crossValidationKby2Classification(df, k=5):
         parameterAverages = parameterCollector.mean()
         highestParameter = parameterAverages.idxmax()
         highestParameter = int(highestParameter)
-        #print(f'Column Averages:\n {parameterAverages} \n Highest Average: {highestParameter}')
+        print(f'Column Averages:\n {parameterAverages} \n Highest Average: {highestParameter}')
 
     #Do 5 loops again, only with the parameter that was determined to be the best
     for i in range(k):
@@ -194,10 +194,10 @@ def crossValidationKby2Classification(df, k=5):
 
         #Collect the best parameter over the 5 experiements, this will be 10 sets        
         testCollector = pd.concat([testCollector, da.knnValidate(combinedData, highestParameter)], axis=0)
-    #print(parameterCollector)
+    print(parameterCollector)
     testAverage = testCollector.mean()
 
-    print(f'The Average is: {testAverage}')    
+    print(f'The Average is: {testAverage}, best parameter is: {highestParameter}')    
 
   
 
