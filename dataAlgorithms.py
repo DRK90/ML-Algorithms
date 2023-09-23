@@ -45,6 +45,7 @@ def knnTest(data):
         #print(f'k=1 {overallResultsForEachTest[0]}, k=3 {overallResultsForEachTest[1]}, k=5 {overallResultsForEachTest[2]}, k=7 {overallResultsForEachTest[3]} ')
         #Add the list of the 4 k value percentages for each pass.  There will be 2 of these lists added
         overallResultsForAllTests.loc[len(overallResultsForAllTests)] = overallResultsForEachTest
+        #reset the overallResults variable to load 4 new ones on the next pass
         overallResultsForEachTest = []
 
     #print(overallResultsForAllTests)
@@ -96,6 +97,38 @@ def knnValidate(data, k):
     return overallResultsForAllTests
     #print(overallResultsForAllTests)
 
+def editKnn(df, pointsToDrop):
+    """
+    delete increasing number of data points that are not predicted correctly by their 1 nearest neighbor. Stop when the result gets below 20% from start
+
+    Parameters:
+    df(DateFrame): the dataframe that will be edited
+
+    Returns: copy of the dataframe
+    """  
+    attributes = df.drop(columns=['class', 'sampleCodeNumber']).columns.tolist()
+    #intialize a drop column
+    df['drop'] = 0
+    for i in range(pointsToDrop):
+        point = df.iloc[i]
+        #temporarily drop the point so it doesnt compare to itself
+        tempDf = df.drop(df.index[i], errors='ignore')
+        #calculate the euclidean distance of each point in the test set against the training set
+        tempDf['distance'] = num.sqrt(((tempDf[attributes] - point[attributes])**2).sum(axis=1))
+        #find the 1 points with the smallest distance
+        nearestNeighbors = tempDf.nsmallest(1,'distance')
+        #of the nearest neighbor list predict based off the mode
+        classPrediction = nearestNeighbors['class'].mode()[0]
+        #if the prediction is wrong, mark it to be dropped
+        df.at[df.index[i], 'drop'] = 1 if classPrediction != point['class'] else 0
+    
+    #find the indices where the drop column is one
+    indexOfPointsToDrop = df[df['drop'] == 1].index
+    #drop the points
+    df = df.drop(indexOfPointsToDrop)
+    print(f'Checked {pointsToDrop} data points. Dropped {len(indexOfPointsToDrop)} points.')
+    return df
+    
 
 
 

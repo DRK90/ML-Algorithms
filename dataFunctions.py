@@ -133,37 +133,42 @@ def crossValidationKby2Classification(df, k=5):
     #initialize to collect best parameter after first part of experiement
     highestParameter = 0
 
-    for i in range(k):
-        class1 = df[df['class']==4]
-        class2 = df[df['class']==2]
-        #class3 = df[df['class']==2]
-        #class4 = df[df['class']==1]
-        trainingData1 = class1.sample(frac=.8)
-        trainingData2 = class2.sample(frac=.8)
-        #trainingData3 = class3.sample(frac=.8)
-        #trainingData4 = class4.sample(frac=.8)
-        trainingData = pd.concat([trainingData1, trainingData2], axis=0)
-        #trainingData = pd.concat([trainingData1, trainingData2, trainingData3, trainingData4], axis=0)
-        testData1 = class1.drop(trainingData1.index)
-        testData2 = class2.drop(trainingData2.index)
-        #testData3 = class3.drop(trainingData3.index)
-        #testData4 = class4.drop(trainingData4.index)
-        #testData = pd.concat([testData1, testData2, testData3, testData4], axis = 0)        
-        testData = pd.concat([testData1, testData2], axis = 0)    
+    #EDIT KNN will be done first
 
-        trainingDataSample1 = trainingData.sample(frac=.5, random_state = 1)
-        trainingDataSample2 = trainingData.drop(trainingDataSample1.index)
+    #First find the best parameters (Dont do this for edited KNN)
+    if 1==0:
+        for i in range(k):
+            class1 = df[df['class']==4]
+            class2 = df[df['class']==2]
+            #class3 = df[df['class']==2]
+            #class4 = df[df['class']==1]
+            trainingData1 = class1.sample(frac=.8)
+            trainingData2 = class2.sample(frac=.8)
+            #trainingData3 = class3.sample(frac=.8)
+            #trainingData4 = class4.sample(frac=.8)
+            trainingData = pd.concat([trainingData1, trainingData2], axis=0)
+            #trainingData = pd.concat([trainingData1, trainingData2, trainingData3, trainingData4], axis=0)
+            testData1 = class1.drop(trainingData1.index)
+            testData2 = class2.drop(trainingData2.index)
+            #testData3 = class3.drop(trainingData3.index)
+            #testData4 = class4.drop(trainingData4.index)
+            #testData = pd.concat([testData1, testData2, testData3, testData4], axis = 0)        
+            testData = pd.concat([testData1, testData2], axis = 0)    
 
-        combinedData = [trainingDataSample1, trainingDataSample2, testData]
+            trainingDataSample1 = trainingData.sample(frac=.5, random_state = 1)
+            trainingDataSample2 = trainingData.drop(trainingDataSample1.index)
 
-        #Collect the best parameter over the 5 experiements, this will be 10 sets        
-        parameterCollector = pd.concat([parameterCollector, da.knnTest(combinedData)], axis=0)
-    #print(parameterCollector)
-    parameterAverages = parameterCollector.mean()
-    highestParameter = parameterAverages.idxmax()
-    highestParameter = int(highestParameter)
-    print(f'Column Averages:\n {parameterAverages} \n Highest Average: {highestParameter}')
+            combinedData = [trainingDataSample1, trainingDataSample2, testData]
 
+            #Collect the best parameter over the 5 experiements, this will be 10 sets        
+            parameterCollector = pd.concat([parameterCollector, da.knnTest(combinedData)], axis=0)
+        #print(parameterCollector)
+        parameterAverages = parameterCollector.mean()
+        highestParameter = parameterAverages.idxmax()
+        highestParameter = int(highestParameter)
+        #print(f'Column Averages:\n {parameterAverages} \n Highest Average: {highestParameter}')
+
+    #Do 5 loops again, only with the parameter that was determined to be the best
     for i in range(k):
         class1 = df[df['class']==4]
         class2 = df[df['class']==2]
@@ -194,10 +199,7 @@ def crossValidationKby2Classification(df, k=5):
 
     print(f'The Average is: {testAverage}')    
 
-def editKnn(df):
-    """
-    
-    """    
+  
 
 def crossValidationKby2Regression(df, k=5):
     """

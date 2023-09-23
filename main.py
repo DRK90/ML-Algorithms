@@ -1,5 +1,6 @@
 import pandas as pd
 import dataFunctions as funcs
+import dataAlgorithms as da
 import matplotlib.pyplot as plt
 
     #TEST DATA - custom to test specific things
@@ -12,7 +13,11 @@ if 1==1:
     csvFilePath = 'dataSource/breast-cancer-wisconsin.data'
     testData = pd.read_csv(csvFilePath, names = ['sampleCodeNumber', 'clumpThickness', 'uniformityOfCellSize', 'uniformityOfCellShape', 'marginalAdhesion', 'singleEpithelialCellSize', 'bareNuclei', 'blandChromatin', 'normalNucleoi', 'mitosis', 'class'])
     testData = funcs.fillMissingWithMean(testData)
-    funcs.crossValidationKby2Classification(testData) 
+    #Check editKnn for all possible values and find where it starts to degrade
+    for i in range(len(testData)):
+        testDate = da.editKnn(testData, i)
+        #run the validation to get the result on the edited testData
+        funcs.crossValidationKby2Classification(testData) 
 
     #CAR EVALUATION DATA - CLASSIFICATION
     #buying[v-high, high, med, low] -> [4,3,2,1]
