@@ -126,8 +126,49 @@ def editKnn(df, pointsToDrop):
     indexOfPointsToDrop = df[df['drop'] == 1].index
     #drop the points
     df = df.drop(indexOfPointsToDrop)
+    df.drop('drop', axis=1, inplace=True)
     print(f'Checked {pointsToDrop} data points. Dropped {len(indexOfPointsToDrop)} points.')
     return df
+
+def condensedKnn(df):
+    """
+    start with an empty condensed set, then add points until no more are added
+
+    Parameters:
+    df(DataFrame): dataframe to condense
+
+    Returns:
+    df(DataFrame): copy of dataFrame that has been condensed
+    """
+    attributes = df.drop(columns=['class', 'sampleCodeNumber']).columns.tolist()
+    #initialize a new dataframe with columns that match the first
+    newDf = pd.DataFrame(columns=df.columns)
+    #copy the first row from df to newDf, then drop it from df
+    firstDataPoint = df.iloc[0]
+    newDf = pd.concat([newDf, pd.DataFrame([firstDataPoint])], ignore_index=True)
+    df = df.drop(df.index[0])
+    #flag to indicate if a point moved - meaning we run through it all again
+    pointMoved = True
+
+    while pointMoved:
+        pointMoved = False
+        pointsToDrop = []
+        for index, instance in df.iterrows():
+            newDf['distance'] = num.sqrt(((newDf[attributes] - instance[attributes])**2).sum(axis=1))
+            nearestNeighbors = newDf.nsmallest(1,'distance')
+            classPrediction = nearestNeighbors['class'].mode()[0]
+            #if the 1NN predicts incorrectly, we move the point from df to the newDf
+            if classPrediction != instance['class']:
+                dataPointToMove = instance
+                newDf = pd.concat([newDf, pd.DataFrame([dataPointToMove])], ignore_index=True)                
+                pointsToDrop.append(index)
+                pointMoved = True
+                print('Point Moved')
+        df = df.drop(pointsToDrop)
+    print(f'newDf is {len(newDf)}')
+    newDf.drop('distance', axis=1, inplace=True)
+
+    return newDf
     
 
 
