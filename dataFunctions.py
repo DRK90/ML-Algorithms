@@ -179,7 +179,12 @@ def crossValidationKby2Classification(df, k=5):
         #trainingData3 = class3.sample(frac=.8)
         #trainingData4 = class4.sample(frac=.8)
         trainingData = pd.concat([trainingData1, trainingData2], axis=0)
-        trainingData = da.condensedKnn(trainingData)
+        #USE THIS FOR CONDENSED KNN
+        #trainingData = da.condensedKnn(trainingData) 
+
+        #USE THIS FOR EDITED KNN
+        trainingData = da.editKnn(trainingData, len(trainingData))
+
         #trainingData = pd.concat([trainingData1, trainingData2, trainingData3, trainingData4], axis=0)
         testData1 = class1.drop(trainingData1.index)
         testData2 = class2.drop(trainingData2.index)

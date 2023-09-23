@@ -126,6 +126,7 @@ def editKnn(df, pointsToDrop):
     indexOfPointsToDrop = df[df['drop'] == 1].index
     #drop the points
     df = df.drop(indexOfPointsToDrop)
+    df.drop('drop', axis=1, inplace=True)
     print(f'Checked {pointsToDrop} data points. Dropped {len(indexOfPointsToDrop)} points.')
     return df
 

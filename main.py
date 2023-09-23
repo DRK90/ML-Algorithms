@@ -15,10 +15,10 @@ if 1==1:
     testData = funcs.fillMissingWithMean(testData)
     #Check editKnn for all possible values and find where it starts to degrade
     #for i in range(len(testData)):
-     #  testData = da.editKnn(testData, i)
+    #testData = da.editKnn(testData, len(testData))
         #run the validation to get the result on the edited testData
     funcs.crossValidationKby2Classification(testData) 
-    #testData = da.condensedKnn(testData)
+    
 
     #CAR EVALUATION DATA - CLASSIFICATION
     #buying[v-high, high, med, low] -> [4,3,2,1]
