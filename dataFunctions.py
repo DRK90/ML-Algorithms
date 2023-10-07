@@ -115,7 +115,7 @@ def hyperParameterTuning(combinedData, columns = [], regression=0):
     combinedResults = [trainingSet1Mode, trainingSet2Mode, testSetMode]
     return combinedResults
 
-def crossValidationKby2Classification(df, k=5):
+def crossValidationKby2Classification(df, k=1):
     """
     Seperate data into 80% training and 20% test. Then, seperate the training data in half. All of these "buckets" are have an equal portion of class distribution.
     
@@ -184,7 +184,7 @@ def crossValidationKby2Classification(df, k=5):
         #trainingData = da.condensedKnn(trainingData) 
 
         #USE THIS FOR EDITED KNN
-        #trainingData = da.editKnn(trainingData, len(trainingData))
+        trainingData = da.editKnn(trainingData, len(trainingData))
 
         #trainingData = pd.concat([trainingData1, trainingData2, trainingData3, trainingData4], axis=0)
         testData1 = class1.drop(trainingData1.index)
@@ -198,10 +198,10 @@ def crossValidationKby2Classification(df, k=5):
         trainingDataSample2 = trainingData.drop(trainingDataSample1.index)
 
         #use this for basic knn testing
-        combinedData = [trainingDataSample1, trainingDataSample2, testData]
+        #combinedData = [trainingDataSample1, trainingDataSample2, testData]
 
         #use this combinedData for condensed testing, and edited testing
-        #combinedData = [trainingData, testData]
+        combinedData = [trainingData, testData]
 
         #Collect the best parameter over the 5 experiements, this will be 10 sets        
         testCollector = pd.concat([testCollector, da.knnValidate(combinedData, highestParameter)], axis=0)
@@ -212,7 +212,7 @@ def crossValidationKby2Classification(df, k=5):
 
   
 
-def crossValidationKby2Regression(df, k=1):
+def crossValidationKby2Regression(df, k=5):
     """
     Seperate data into 80% training and 20% test. Then, seperate the training data in half. All of these "buckets" are have an equal portion of class distribution.
     
@@ -239,7 +239,8 @@ def crossValidationKby2Regression(df, k=1):
         print(parameterCollector)
         testCollector = pd.concat([testCollector, parameterCollector], ignore_index=True)
     averages = testCollector.groupby(['k', 'gamma', 'epsilon'])['accuracy'].mean().reset_index()
-    highestAverage = averages.idxmax()
+    highestAverageIndex = averages['accuracy'].idxmax()
+    highestAverage = averages.loc[highestAverageIndex]
     print(averages)
     print(highestAverage)
     

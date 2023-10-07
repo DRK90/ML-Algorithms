@@ -20,7 +20,7 @@ def knnTest(data):
     overallResultsForEachTest = []
     #test each of the parameters for k, 1,3,5,7
     overallResultsForAllTests = pd.DataFrame(columns=['1', '3', '5', '7'])
-    kChoices = [1,3,5,7]
+    kChoices = [1, 3,5,7]
 
     #run the loop twice, flip it to test on the opposite datasets
     for i in range(2):

@@ -18,11 +18,11 @@ def knnTest(data):
     attributes = data[0].drop(columns=['Rings']).columns.tolist()
     #capture the results of the test to get the accuracy
     overallResultsForEachTest = pd.DataFrame(columns=['k', 'gamma', 'epsilon', 'accuracy'])
-    #test each of the parameters for gamma
-    overallResultsForAllTests = pd.DataFrame(columns=['k', 'gamma', 'epsilon', 'accuracy'])
-    gammaChoices = [0.01,0.1,1,10]
+
+    #candidate paramater choices
+    gammaChoices = [.01,.1,1,10]
     epsilonChoices = [0.25,0.5,1,2]
-    kChoices = [1,3,5,7]
+    kChoices = [3,5,7]
 
     #run the loop twice, flip it to test on the opposite datasets
     for i in range(2):
