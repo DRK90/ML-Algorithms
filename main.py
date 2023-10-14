@@ -1,7 +1,9 @@
 import pandas as pd
 import dataFunctions as funcs
 import dataAlgorithms as da
+import decisionTreeAlgorithms as tree
 import matplotlib.pyplot as plt
+import json
 
     #TEST DATA - custom to test specific things
 if 1==0:
@@ -12,12 +14,27 @@ if 1==0:
 if 1==1:
     csvFilePath = 'dataSource/breast-cancer-wisconsin.data'
     testData = pd.read_csv(csvFilePath, names = ['sampleCodeNumber', 'clumpThickness', 'uniformityOfCellSize', 'uniformityOfCellShape', 'marginalAdhesion', 'singleEpithelialCellSize', 'bareNuclei', 'blandChromatin', 'normalNucleoi', 'mitosis', 'class'])
+    testData.drop("sampleCodeNumber", axis=1, inplace=True)
     testData = funcs.fillMissingWithMean(testData)
+    for col in testData.columns:
+        testData[col] = testData[col].astype(int)
     #Check editKnn for all possible values and find where it starts to degrade
     #for i in range(len(testData)):
     #testData = da.editKnn(testData, len(testData))
         #run the validation to get the result on the edited testData
-    funcs.crossValidationKby2Classification(testData) 
+    result = tree.calculateRoot(testData)
+    for i in result:
+        print(i, "\n")
+    
+    #print data to pdf graphs
+    if 1==0:
+        for feature in ['clumpThickness', 'uniformityOfCellSize', 'uniformityOfCellShape', 'marginalAdhesion', 'singleEpithelialCellSize', 'bareNuclei', 'blandChromatin', 'normalNucleoi', 'mitosis']:
+            plt.figure(figsize = (10,5))
+            testData.groupby(feature)['class'].value_counts().unstack().plot(kind='bar', stacked=True)
+            plt.title(feature)
+            plt.savefig(f"graphs/{feature}.pdf", bbox_inches='tight')
+
+    #funcs.crossValidationKby2Classification(testData) 
     
 #CAR EVALUATION DATA - CLASSIFICATION
 if 1==0:
