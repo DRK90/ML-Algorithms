@@ -1,7 +1,9 @@
 import pandas as pd
 import dataFunctions as funcs
 import dataAlgorithms as da
+import decisionTreeAlgorithms as tree
 import matplotlib.pyplot as plt
+import json
 
     #TEST DATA - custom to test specific things
 if 1==0:
@@ -9,15 +11,30 @@ if 1==0:
     testData = pd.read_csv(csvFilePath, header=None)
 
 #BREAST CANCER DATA - CLASSIFICATION
-if 1==1:
+if 1==0:
     csvFilePath = 'dataSource/breast-cancer-wisconsin.data'
     testData = pd.read_csv(csvFilePath, names = ['sampleCodeNumber', 'clumpThickness', 'uniformityOfCellSize', 'uniformityOfCellShape', 'marginalAdhesion', 'singleEpithelialCellSize', 'bareNuclei', 'blandChromatin', 'normalNucleoi', 'mitosis', 'class'])
+    testData.drop("sampleCodeNumber", axis=1, inplace=True)
     testData = funcs.fillMissingWithMean(testData)
+    for col in testData.columns:
+        testData[col] = testData[col].astype(int)
     #Check editKnn for all possible values and find where it starts to degrade
     #for i in range(len(testData)):
     #testData = da.editKnn(testData, len(testData))
         #run the validation to get the result on the edited testData
-    funcs.crossValidationKby2Classification(testData) 
+    funcs.crossValidationKby2Classification(testData)
+
+
+    
+    #print data to pdf graphs
+    if 1==0:
+        for feature in ['clumpThickness', 'uniformityOfCellSize', 'uniformityOfCellShape', 'marginalAdhesion', 'singleEpithelialCellSize', 'bareNuclei', 'blandChromatin', 'normalNucleoi', 'mitosis']:
+            plt.figure(figsize = (10,5))
+            testData.groupby(feature)['class'].value_counts().unstack().plot(kind='bar', stacked=True)
+            plt.title(feature)
+            plt.savefig(f"graphs/{feature}.pdf", bbox_inches='tight')
+
+    #funcs.crossValidationKby2Classification(testData) 
     
 #CAR EVALUATION DATA - CLASSIFICATION
 if 1==0:
@@ -50,17 +67,18 @@ if 1==0:
     testData = pd.read_csv(csvFilePath, names = ['class', 'handicapped-infants', 'water-project-cost-sharing', 'adoption-of-the-budget-resolution', 'physician-fee-freeze', 'el-salvador-aid', 'religious-groups-in-schools', 'anti-satellite-test-ban', 'aid-to-nicaraguan-contras', 'mx-missile', 'immigration', 'synfuels-corporation-cutback', 'education-spending', 'superfund-right-to-sue', 'crime', 'duty-free-exports', 'export-administration-act-south-africa'])
 
 #Abalone - Regression (PREDICT RINGS)
-if 1==0:
+if 1==1:
     #Abalone - Regression (PREDICT RINGS)
     #SEX[M,F,I] -> sex_m, sex_f, sex_i (one hot encode)
     csvFilePath = 'dataSource/abalone(1)-1.data'
     testData = pd.read_csv(csvFilePath, names = ['Sex', 'Length', 'Diameter', 'Height', 'Whole_weight', 'Shucked_weight', 'Viscera_weight', 'Shell_weight', 'Rings'])
-    print(testData)
-    testData = funcs.oneHotEncodeColumn(testData, ['Sex'])
+    #print(testData)
+    #testData = funcs.oneHotEncodeColumn(testData, ['Sex'])
+    testData = funcs.replaceOrdinalslWithIntegers(testData, ['M', 'I', 'F'], [1,2,3], 'Sex')
     testData = funcs.fillMissingWithMean(testData)
     funcs.crossValidationKby2Regression(testData)
     #testData = funcs.zScoreStandardize(testData, 'Rings')
-    print(testData)
+    #print(testData)
 
 
 #Computer Hardware - Regression (Predict ERP - Estimated Relative Performance)
