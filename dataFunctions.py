@@ -1,7 +1,8 @@
 import pandas as pd
-import numpy as np
 import dataAlgorithms as da
 import dataAlgorithmsRegression as dar
+import decisionTreeAlgorithms as trees
+import DecTreeReg as regTrees
 
 def fillMissingWithMean(df):
     """
@@ -125,20 +126,11 @@ def crossValidationKby2Classification(df, k=1):
     
     """
     #next break the dataframe in 2 one with each class value, this will assist in stratification 
-    #THIS WILL NEED TO BE UPDATED IF MORE THAN 2 CLASSES
-    testResult1 = []
-    #collect the best returned parameter
-    parameterCollector = pd.DataFrame(columns=['1','3','5','7'])
-    #testCollector used for second part where we have the best parameter
-    testCollector = pd.DataFrame(columns=['best parameter'])
-    #initialize to collect best parameter after first part of experiement
-    highestParameter = 0
-
     #EDIT KNN will be done first
 
-    #First find the best parameters (Dont do this for edited KNN)
+    #First find the root node
     if 1==1:
-        for i in range(k):
+        for i in range(1):
             class1 = df[df['class']==4]
             class2 = df[df['class']==2]
             #class3 = df[df['class']==2]
@@ -148,6 +140,7 @@ def crossValidationKby2Classification(df, k=1):
             #trainingData3 = class3.sample(frac=.8)
             #trainingData4 = class4.sample(frac=.8)
             trainingData = pd.concat([trainingData1, trainingData2], axis=0)
+            trainingData = trainingData.sample(frac=1).reset_index(drop=True)
             #trainingData = pd.concat([trainingData1, trainingData2, trainingData3, trainingData4], axis=0)
             testData1 = class1.drop(trainingData1.index)
             testData2 = class2.drop(trainingData2.index)
@@ -155,20 +148,199 @@ def crossValidationKby2Classification(df, k=1):
             #testData4 = class4.drop(trainingData4.index)
             #testData = pd.concat([testData1, testData2, testData3, testData4], axis = 0)        
             testData = pd.concat([testData1, testData2], axis = 0)    
-
-            trainingDataSample1 = trainingData.sample(frac=.5, random_state = 1)
+            trainingDataSample1 = trainingData.sample(frac=.5)
             trainingDataSample2 = trainingData.drop(trainingDataSample1.index)
 
-            combinedData = [trainingDataSample1, trainingDataSample2, testData]
+            #recurseive version
+            root = trees.calculateRoot(trainingDataSample1)
 
-            #Collect the best parameter over the 5 experiements, this will be 10 sets        
-            parameterCollector = pd.concat([parameterCollector, da.knnTest(combinedData)], axis=0)
-        #print(parameterCollector)
-        parameterAverages = parameterCollector.mean()
-        highestParameter = parameterAverages.idxmax()
-        highestParameter = int(highestParameter)
-        print(f'Column Averages:\n {parameterAverages} \n Highest Average: {highestParameter}')
+            trees.printTree(root)
 
+            predictions = []
+            actuals = testData["class"].tolist()
+
+
+            for i, row in testData.iterrows():
+                prediction = trees.predict(row, root)  
+                predictions.append(prediction)
+
+            correctPredictions = 0
+            for i in range(len(predictions)):
+                if predictions[i] == actuals[i]:
+                    correctPredictions += 1
+
+            accuracy = correctPredictions / len(actuals) * 100
+            print(f"Pre-pruning Accuracy: {accuracy:.2f}%")
+
+
+            #NOW WE PRUNE AND DO IT AGAIN
+            if 1==1:
+                trees.prune(root, trainingDataSample2, root)
+                trees.printTree(root)
+
+
+                predictions = []
+                actuals = testData["class"].tolist()
+
+
+                for i, row in testData.iterrows():
+                    prediction = trees.predict(row, root)  
+                    predictions.append(prediction)
+
+                correctPredictions = 0
+                for i in range(len(predictions)):
+                    if predictions[i] == actuals[i]:
+                        correctPredictions += 1
+
+                accuracy = correctPredictions / len(actuals) * 100
+                print(f"Post-pruning Accuracy: {accuracy:.2f}%")
+
+
+            #first root (NOT RECURSIVE)
+            if 1==0:
+                rootValue = trees.calculateRoot(trainingData)
+                if type(rootValue)==int:
+                    print(f"trainingData leaf: {rootValue}")
+                else:
+                    feature = rootValue[0]['bestFeature']
+                    value = rootValue[0]['bestValue']
+                    trainingDataLeft = trainingData[trainingData[feature] <= value]
+                    trainingDataRight = trainingData[trainingData[feature] > value]
+                    print(f"trainingData: {rootValue}")
+
+                    #first left child
+                    rootValue = trees.calculateRoot(trainingDataLeft)
+                    if type(rootValue)==int:
+                        print(f"trainingDataLeft leaf: {rootValue}")
+                    else:
+                        feature = rootValue[0]['bestFeature']
+                        value = rootValue[0]['bestValue']
+                        trainingDataLeftLeft = trainingDataLeft[trainingDataLeft[feature] <= value]
+                        trainingDataLeftRight = trainingDataLeft[trainingDataLeft[feature] > value]
+                        print(f"trainingDataLeft: {rootValue}")
+
+                        # left child from first left child
+                        rootValue = trees.calculateRoot(trainingDataLeftLeft)
+                        if type(rootValue)==int:
+                            print(f"trainingDataLeftLeft leaf: {rootValue}")
+                        else:            
+                            feature = rootValue[0]['bestFeature']
+                            value = rootValue[0]['bestValue']
+                            trainingDataLeftLeftLeft = trainingDataLeftLeft[trainingDataLeftLeft[feature] <= value]
+                            trainingDataLeftLeftRight = trainingDataLeftLeft[trainingDataLeftLeft[feature] > value]
+                            print(f"trainingDataLeftLeft: {rootValue}")
+
+                            # left child from left child from first left child
+                            rootValue = trees.calculateRoot(trainingDataLeftLeftLeft)
+                            if type(rootValue)==int:
+                                print(f"trainingDataLeftLeftLeft leaf: {rootValue}")
+                            else:
+                                feature = rootValue[0]['bestFeature']
+                                value = rootValue[0]['bestValue']
+                                trainingDataLeftLeftLeftLeft = trainingDataLeftLeftLeft[trainingDataLeftLeftLeft[feature] <= value]
+                                trainingDataLeftLeftLeftRight = trainingDataLeftLeftLeft[trainingDataLeftLeftLeft[feature] > value]
+                                print(f"trainingDataLeftLeftLeft: {rootValue}")
+
+                                # left child from left child from left child from first left child
+                                rootValue = trees.calculateRoot(trainingDataLeftLeftLeftLeft)
+                                if type(rootValue)==int:
+                                    print(f"trainingDataLeftLeftLeftLeft leaf: {rootValue}")
+                                else:
+                                    feature = rootValue[0]['bestFeature']
+                                    value = rootValue[0]['bestValue']
+                                    trainingDataLeftLeftLeftLeftLeft = trainingDataLeftLeftLeftLeft[trainingDataLeftLeftLeftLeft[feature] <= value]
+                                    trainingDataLeftLeftLeftLeftRight = trainingDataLeftLeftLeftLeft[trainingDataLeftLeftLeftLeft[feature] > value]
+                                    print(f"trainingDataLeftLeftLeftLeft: {rootValue}")
+
+                                # right child from left child from left child from first left child
+                                rootValue = trees.calculateRoot(trainingDataLeftLeftLeftRight)
+                                if type(rootValue)==int:
+                                    print(f"trainingDataLeftLeftLeftRight leaf: {rootValue}")
+                                else:
+                                    feature = rootValue[0]['bestFeature']
+                                    value = rootValue[0]['bestValue']
+                                    trainingDataLeftLeftLeftRightLeft = trainingDataLeftLeftLeftRight[trainingDataLeftLeftLeftRight[feature] <= value]
+                                    trainingDataLeftLeftLeftRightRight = trainingDataLeftLeftLeftRight[trainingDataLeftLeftLeftRight[feature] > value]
+                                    print(f"trainingDataLeftLeftLeftRight: {rootValue}")
+
+                            # right child from left child from first left child
+                            rootValue = trees.calculateRoot(trainingDataLeftLeftRight)
+                            if type(rootValue)==int:
+                                print(f"trainingDataLeftLeftRight leaf: {rootValue}")
+                            else:            
+                                feature = rootValue[0]['bestFeature']
+                                value = rootValue[0]['bestValue']
+                                trainingDataLeftLeftRightLeft = trainingDataLeftLeft[trainingDataLeftLeft[feature] <= value]
+                                trainingDataLeftLeftRightRight = trainingDataLeftLeft[trainingDataLeftLeft[feature] > value]
+                                print(f"trainingDataLeftLeftRight: {rootValue}")
+
+                        # right child from first left child
+                        rootValue = trees.calculateRoot(trainingDataLeftRight)
+                        if type(rootValue)==int:
+                            print(f"trainingDataLeftRight leaf: {rootValue}")
+                        else:
+                            feature = rootValue[0]['bestFeature']
+                            value = rootValue[0]['bestValue']
+                            trainingDataLeftRightLeft = trainingDataLeftRight[trainingDataLeftRight[feature] <= value]
+                            trainingDataLeftRightRight = trainingDataLeftRight[trainingDataLeftRight[feature] > value]
+                            print(f"trainingDataLeftRight: {rootValue}")
+
+                            # left child from right child from first left child
+                            rootValue = trees.calculateRoot(trainingDataLeftRightLeft)
+                            if type(rootValue)==int:
+                                print(f"trainingDataLeftRightLeft leaf: {rootValue}")
+                            else:
+                                feature = rootValue[0]['bestFeature']
+                                value = rootValue[0]['bestValue']
+                                trainingDataLeftRightLeftLeft = trainingDataLeftRightLeft[trainingDataLeftRightLeft[feature] <= value]
+                                trainingDataLeftRightLeftRight = trainingDataLeftRightLeft[trainingDataLeftRightLeft[feature] > value]
+                                print(f"trainingDataLeftRightLeft: {rootValue}")
+
+                            # right child from right child from first left child
+                            rootValue = trees.calculateRoot(trainingDataLeftRightRight)
+                            if type(rootValue)==int:
+                                print(f"trainingDataLeftRightRight leaf: {rootValue}")
+                            else:
+                                feature = rootValue[0]['bestFeature']
+                                value = rootValue[0]['bestValue']
+                                trainingDataLeftRightRightLeft = trainingDataLeftRightRight[trainingDataLeftRightRight[feature] <= value]
+                                trainingDataLeftRightRightRight = trainingDataLeftRightRight[trainingDataLeftRightRight[feature] > value]
+                                print(f"trainingDataLeftRightRight: {rootValue}")
+
+                    #first right child
+                    rootValue = trees.calculateRoot(trainingDataRight)
+                    if type(rootValue)==int:
+                        print(f"trainingDataRight leaf: {rootValue}")
+                    else:
+                        feature = rootValue[0]['bestFeature']
+                        value = rootValue[0]['bestValue']
+                        trainingDataRightLeft = trainingDataRight[trainingDataRight[feature] <= value]
+                        trainingDataRightRight = trainingDataRight[trainingDataRight[feature] > value]
+                        print(f"trainingDataRight: {rootValue}")
+
+                        #left child from first right child
+                        rootValue = trees.calculateRoot(trainingDataRightLeft)
+                        if type(rootValue)==int:
+                            print(f"trainingDataRightLeft leaf: {rootValue}")
+                        else:
+                            feature = rootValue[0]['bestFeature']
+                            value = rootValue[0]['bestValue']
+                            trainingDataRightLeftLeft = trainingDataRightLeft[trainingDataRightLeft[feature] <= value]
+                            trainingDataRightLeftRight = trainingDataRightLeft[trainingDataRightLeft[feature] > value]
+                            print(f"trainingDataRightLeft: {rootValue}")
+
+                        #right child from first right child
+                        rootValue = trees.calculateRoot(trainingDataRightRight)
+                        if type(rootValue)==int:
+                            print(f"trainingDataRightRight leaf: {rootValue}")
+                        else:
+                            feature = rootValue[0]['bestFeature']
+                            value = rootValue[0]['bestValue']
+                            trainingDataRightRightLeft = trainingDataRightRight[trainingDataRightRight[feature] <= value]
+                            trainingDataRightRightRight = trainingDataRightRight[trainingDataRightRight[feature] > value]
+                            print(f"trainingDataRightRight: {rootValue}")
+
+       
     #Do 5 loops again, only with the parameter that was determined to be the best
     for i in range(k):
         class1 = df[df['class']==4]
@@ -180,39 +352,23 @@ def crossValidationKby2Classification(df, k=1):
         #trainingData3 = class3.sample(frac=.8)
         #trainingData4 = class4.sample(frac=.8)
         trainingData = pd.concat([trainingData1, trainingData2], axis=0)
-        #USE THIS FOR CONDENSED KNN
-        #trainingData = da.condensedKnn(trainingData) 
-
-        #USE THIS FOR EDITED KNN
-        trainingData = da.editKnn(trainingData, len(trainingData))
 
         #trainingData = pd.concat([trainingData1, trainingData2, trainingData3, trainingData4], axis=0)
         testData1 = class1.drop(trainingData1.index)
-        testData2 = class2.drop(trainingData2.index)
-        #testData3 = class3.drop(trainingData3.index)
-        #testData4 = class4.drop(trainingData4.index)
-        #testData = pd.concat([testData1, testData2, testData3, testData4], axis = 0)        
+        testData2 = class2.drop(trainingData2.index)   
         testData = pd.concat([testData1, testData2], axis = 0)    
 
         trainingDataSample1 = trainingData.sample(frac=.5, random_state = 1)
         trainingDataSample2 = trainingData.drop(trainingDataSample1.index)
 
-        #use this for basic knn testing
-        #combinedData = [trainingDataSample1, trainingDataSample2, testData]
 
-        #use this combinedData for condensed testing, and edited testing
-        combinedData = [trainingData, testData]
 
-        #Collect the best parameter over the 5 experiements, this will be 10 sets        
-        testCollector = pd.concat([testCollector, da.knnValidate(combinedData, highestParameter)], axis=0)
-    #print(parameterCollector)
-    testAverage = testCollector.mean()
 
-    print(f'The Average is: {testAverage}, best parameter is: {highestParameter}')    
+
 
   
 
-def crossValidationKby2Regression(df, k=5):
+def crossValidationKby2Regression(df, k=1):
     """
     Seperate data into 80% training and 20% test. Then, seperate the training data in half. All of these "buckets" are have an equal portion of class distribution.
     
@@ -223,25 +379,53 @@ def crossValidationKby2Regression(df, k=5):
     """
     #next break the dataframe in 2 one with each class value, this will assist in stratification 
     #THIS WILL NEED TO BE UPDATED IF MORE THAN 2 CLASSES
-    parameterCollector = pd.DataFrame(columns=['k', 'gamma', 'epsilon', 'accuracy'])
-    testCollector = pd.DataFrame(columns=['k', 'gamma', 'epsilon', 'accuracy'])
+
     for i in range(k):
        
-        trainingData1 = df.sample(frac=.8, random_state = 1)
+        trainingData1 = df.sample(frac=.8)
         testData1 = df.drop(trainingData1.index)     
 
-        trainingDataSample1 = trainingData1.sample(frac=.5, random_state = 1)
+        trainingDataSample1 = trainingData1.sample(frac=.5)
         trainingDataSample2 = trainingData1.drop(trainingDataSample1.index)
 
-        combinedData = [trainingDataSample1, trainingDataSample2, testData1]
-        #Placeholder for use in later tests
-        parameterCollector = dar.knnTest(combinedData)
-        print(parameterCollector)
-        testCollector = pd.concat([testCollector, parameterCollector], ignore_index=True)
-    averages = testCollector.groupby(['k', 'gamma', 'epsilon'])['accuracy'].mean().reset_index()
-    highestAverageIndex = averages['accuracy'].idxmax()
-    highestAverage = averages.loc[highestAverageIndex]
-    print(averages)
-    print(highestAverage)
+        root = regTrees.calculateRoot(trainingDataSample1)
+        regTrees.printTree(root)
+
+        predictions = []
+        actuals = testData1["Rings"].tolist()
+
+
+        for i, row in testData1.iterrows():
+            prediction = regTrees.predict(row, root)  
+            predictions.append(prediction)
+
+        correctPredictions = 0
+        for i in range(len(predictions)):
+            if predictions[i] == actuals[i]:
+                correctPredictions += 1
+
+        accuracy = correctPredictions / len(actuals) * 100
+        print(f"Pre-pruning Accuracy: {accuracy:.2f}%")       
+
+        #prune
+        regTrees.prune(root, trainingDataSample2, root)
+        regTrees.printTree(root)
+
+        predictions = []
+        actuals = testData1["Rings"].tolist()
+
+
+        for i, row in testData1.iterrows():
+            prediction = regTrees.predict(row, root)  
+            predictions.append(prediction)
+
+        correctPredictions = 0
+        for i in range(len(predictions)):
+            if predictions[i] == actuals[i]:
+                correctPredictions += 1
+
+        accuracy = correctPredictions / len(actuals) * 100
+        print(f"Post-pruning Accuracy: {accuracy:.2f}%")  
+
     
     

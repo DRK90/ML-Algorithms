@@ -9,95 +9,70 @@ class Node:
         self.right = right      # right
         self.data = data 
 
-def calculateRoot(dataframe):
+def calculateRoot(dataframe, target="Rings"):
     """
     find the root of the remaining data (recursive)
     Parameters: dataframe, target
     returns: root
     
     """
-    def entropy(column):
-        classType, counts = num.unique(column, return_counts=True)
-        entropy = -num.sum([(counts[i]/num.sum(counts))*num.log2(counts[i]/num.sum(counts)) for i in range(len(classType))])
-        return entropy
 
-    def informationGain(testFeature, testValue, target="class"):
-        #calculate initial entropy
-        totalEntropy = entropy(dataframe[target])
+    def mse(column):
+        meanValue = num.mean(column)
+        return num.mean((column - meanValue)**2)
+    
+    def getSplitError(feature, val):
+        dataBelow = dataframe[dataframe[feature] <= val]
+        dataAbove = dataframe[dataframe[feature] > val]
 
-        dataBelow = dataframe[dataframe[testFeature] <= testValue]
-        dataAbove = dataframe[dataframe[testFeature] > testValue]
-        
         probBelow = len(dataBelow) / len(dataframe)
         probAbove = len(dataAbove) / len(dataframe)
-        
-        weightedEntropy = (probBelow * entropy(dataBelow[target])) + (probAbove * entropy(dataAbove[target]))
 
-        infoGain = totalEntropy - weightedEntropy
-        return infoGain
+        weightedMse = (probBelow * mse(dataBelow[target])) + (probAbove * mse(dataAbove[target]))
+        return weightedMse
     
-    def intrinsicValue(testFeature, testValue):
-        dataBelow = dataframe[dataframe[testFeature] <= testValue]
-        dataAbove = dataframe[dataframe[testFeature] > testValue]
+    def getSplits(dataframe, feature):
+        percentiles = [10,40,70,90]
+        potentialSplits = dataframe[feature].quantile(q=[p/100 for p in percentiles]).unique()
+        return potentialSplits
         
-        probBelow = len(dataBelow) / len(dataframe)
-        probAbove = len(dataAbove) / len(dataframe)
-        
-        if probBelow == 0 or probAbove == 0:
-            return 0
-
-        iv = -(probBelow * num.log2(probBelow) + probAbove * num.log2(probAbove))
-        return iv
-
-
-            
-    
-    bestRatio = float('-inf')
+    bestError = float('inf')
     bestFeature = None
     bestValue = None
-    allFeatureGainRatios = []
 
-    for feature in dataframe.columns.drop('class'):
-        totalEntropy = entropy(dataframe['class'])
+    for feature in dataframe.columns.drop(target):
+        totalVariance = mse(dataframe[target])
         #base case, when all of the class is the same
-        if totalEntropy == 0:
-            return Node(data=int(dataframe["class"].iloc[0]))
+        if totalVariance == 0:
+            return Node(data=num.mean(dataframe[target]))
         
-        #check on each unique value
-        uniqueValues = dataframe[feature].unique()
-        for val in uniqueValues:
+        #check on each unique value for sex (still call them splits)
+        if feature == 'Sex':
+            splits = dataframe[feature].unique()
+        else:
+            splits = getSplits(dataframe, feature)
 
-            gainOnThisSplit = informationGain(feature, val, "class")
+        for val in splits:
 
-            iv = intrinsicValue(feature, val)
-
-            gainRatio = gainOnThisSplit / iv if iv !=0 else 0
-
-
-            if gainRatio > bestRatio:
-                bestRatio = gainRatio
+            currentError = getSplitError(feature, val)
+            if currentError < bestError:
+                bestError = currentError
                 bestFeature = feature
                 bestValue = val
-        #allFeatureGainRatios.append({'gainRatio': bestRatioFeature,
-         #                           'feature': feature,
-          #                          'value': bestValueFeature
-           #                         })
-    #define the current node
+    
+    #return leaf, if theres no reduction in error
+    if bestFeature is None:
+        return Node(data=num.mean(dataframe[target]))
+    
     currentNode = Node(feature=bestFeature, value=bestValue)
 
-    #split the data for recursion
+    #split data for recursive call
     trainingDataLeft = dataframe[dataframe[bestFeature] <= bestValue]
     trainingDataRight = dataframe[dataframe[bestFeature] > bestValue]
 
     #recurse
-    currentNode.left = calculateRoot(trainingDataLeft)
-    currentNode.right = calculateRoot(trainingDataRight)
-
-    allFeatureGainRatios.append({
-        'gainRatio': bestRatio,
-        'bestFeature': bestFeature,
-        'bestValue': bestValue
-    })
+    currentNode.left = calculateRoot(trainingDataLeft, target=target)
+    currentNode.right = calculateRoot(trainingDataRight, target=target)
 
     return currentNode
 
@@ -134,7 +109,7 @@ def prunePredict(node, validateData):
     correct = 0
     for index, row in validateData.iterrows():
         prediction = predict(row, node)
-        if prediction == row["class"]:
+        if prediction == row["Rings"]:
             correct += 1
     return correct / len(validateData)
 
@@ -180,7 +155,7 @@ def prune(node, validationData, nodeCopy):
     # prune by replacing the node with a leaf with the most common class value
     applicableData = getApplicableData(node, validationData, nodeCopy)
 
-    classValues, counts = num.unique(validationData["class"], return_counts=True)
+    classValues, counts = num.unique(validationData["Rings"], return_counts=True)
     node.data = classValues[num.argmax(counts)]
     
     # get the accuracy of the post pruned tree
@@ -188,12 +163,10 @@ def prune(node, validationData, nodeCopy):
     postAccuracy = prunePredict(nodeCopy, validationData)
     
     # If pruning doesn't increase the accuracy, restore the children
-    if postAccuracy <= preAccuracy:
+    if postAccuracy < preAccuracy:
         node.left = tempLeft
         node.right = tempRight
         node.data = None
-    else:
-        print("test")
     
     
 
