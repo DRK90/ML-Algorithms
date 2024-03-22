@@ -3,6 +3,9 @@ import dataAlgorithms as da
 import dataAlgorithmsRegression as dar
 import decisionTreeAlgorithms as trees
 import DecTreeReg as regTrees
+import logisticRegression as lr
+import linearNetwork as ln
+import feedForwardBasic as ffb
 
 def fillMissingWithMean(df):
     """
@@ -49,7 +52,7 @@ def oneHotEncodeColumn(df, column):
 
     Returns: a copy of the dataframe with the one hot encoding applied to the selected column    
     """
-    return pd.get_dummies(df, columns = column, dtype=int)
+    return pd.get_dummies(df[column])
 
 def discretizeEqualWidth(df, column, numberOfBins):
     """
@@ -151,30 +154,43 @@ def crossValidationKby2Classification(df, k=1):
             trainingDataSample1 = trainingData.sample(frac=.5)
             trainingDataSample2 = trainingData.drop(trainingDataSample1.index)
 
+            #basic logistic regression
+            if 1==0:
+                trainedWeights = lr.train(trainingDataSample1, "class")
+                accuracy = lr.test(trainingDataSample2, "class", trainedWeights)
+                print(accuracy)
+
+            #feed forward with backprop
+            if 1==1:
+                w1, b1, w2, b2, w3, b3 = ffb.train(trainingDataSample1, "class")
+                accuracy = ffb.test(trainingDataSample2, "class", w1, b1, w2, b2, w3, b3)
+                print(accuracy)
+
+
             #recurseive version
-            root = trees.calculateRoot(trainingDataSample1)
+            #root = trees.calculateRoot(trainingDataSample1)
 
-            trees.printTree(root)
+            #trees.printTree(root)
 
-            predictions = []
-            actuals = testData["class"].tolist()
+            #predictions = []
+            #actuals = testData["class"].tolist()
 
+            if 1==0:
+                for i, row in testData.iterrows():
+                    prediction = trees.predict(row, root)  
+                    predictions.append(prediction)
 
-            for i, row in testData.iterrows():
-                prediction = trees.predict(row, root)  
-                predictions.append(prediction)
+                correctPredictions = 0
+                for i in range(len(predictions)):
+                    if predictions[i] == actuals[i]:
+                        correctPredictions += 1
 
-            correctPredictions = 0
-            for i in range(len(predictions)):
-                if predictions[i] == actuals[i]:
-                    correctPredictions += 1
-
-            accuracy = correctPredictions / len(actuals) * 100
-            print(f"Pre-pruning Accuracy: {accuracy:.2f}%")
+                accuracy = correctPredictions / len(actuals) * 100
+                print(f"Pre-pruning Accuracy: {accuracy:.2f}%")
 
 
             #NOW WE PRUNE AND DO IT AGAIN
-            if 1==1:
+            if 1==0:
                 trees.prune(root, trainingDataSample2, root)
                 trees.printTree(root)
 
@@ -388,44 +404,52 @@ def crossValidationKby2Regression(df, k=1):
         trainingDataSample1 = trainingData1.sample(frac=.5)
         trainingDataSample2 = trainingData1.drop(trainingDataSample1.index)
 
-        root = regTrees.calculateRoot(trainingDataSample1)
-        regTrees.printTree(root)
-
-        predictions = []
-        actuals = testData1["Rings"].tolist()
-
-
-        for i, row in testData1.iterrows():
-            prediction = regTrees.predict(row, root)  
-            predictions.append(prediction)
-
-        correctPredictions = 0
-        for i in range(len(predictions)):
-            if predictions[i] == actuals[i]:
-                correctPredictions += 1
-
-        accuracy = correctPredictions / len(actuals) * 100
-        print(f"Pre-pruning Accuracy: {accuracy:.2f}%")       
-
-        #prune
-        regTrees.prune(root, trainingDataSample2, root)
-        regTrees.printTree(root)
-
-        predictions = []
-        actuals = testData1["Rings"].tolist()
+        #linear network
+        trainedWeights = ln.train(trainingDataSample1, "Rings")
+        mse = ln.test(trainingDataSample2, "Rings", trainedWeights)
+        print(mse)
 
 
-        for i, row in testData1.iterrows():
-            prediction = regTrees.predict(row, root)  
-            predictions.append(prediction)
+        #decision tree
+        if 1==0:
+            root = regTrees.calculateRoot(trainingDataSample1)
+            regTrees.printTree(root)
 
-        correctPredictions = 0
-        for i in range(len(predictions)):
-            if predictions[i] == actuals[i]:
-                correctPredictions += 1
+            predictions = []
+            actuals = testData1["Rings"].tolist()
 
-        accuracy = correctPredictions / len(actuals) * 100
-        print(f"Post-pruning Accuracy: {accuracy:.2f}%")  
+
+            for i, row in testData1.iterrows():
+                prediction = regTrees.predict(row, root)  
+                predictions.append(prediction)
+
+            correctPredictions = 0
+            for i in range(len(predictions)):
+                if predictions[i] == actuals[i]:
+                    correctPredictions += 1
+
+            accuracy = correctPredictions / len(actuals) * 100
+            print(f"Pre-pruning Accuracy: {accuracy:.2f}%")       
+
+            #prune
+            regTrees.prune(root, trainingDataSample2, root)
+            regTrees.printTree(root)
+
+            predictions = []
+            actuals = testData1["Rings"].tolist()
+
+
+            for i, row in testData1.iterrows():
+                prediction = regTrees.predict(row, root)  
+                predictions.append(prediction)
+
+            correctPredictions = 0
+            for i in range(len(predictions)):
+                if predictions[i] == actuals[i]:
+                    correctPredictions += 1
+
+            accuracy = correctPredictions / len(actuals) * 100
+            print(f"Post-pruning Accuracy: {accuracy:.2f}%")  
 
     
     
