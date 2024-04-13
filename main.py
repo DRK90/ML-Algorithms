@@ -11,7 +11,7 @@ if 1==0:
     testData = pd.read_csv(csvFilePath, header=None)
 
 #BREAST CANCER DATA - CLASSIFICATION
-if 1==0:
+if 1==1:
     csvFilePath = 'dataSource/breast-cancer-wisconsin.data'
     testData = pd.read_csv(csvFilePath, names = ['sampleCodeNumber', 'clumpThickness', 'uniformityOfCellSize', 'uniformityOfCellShape', 'marginalAdhesion', 'singleEpithelialCellSize', 'bareNuclei', 'blandChromatin', 'normalNucleoi', 'mitosis', 'class'])
     testData.drop("sampleCodeNumber", axis=1, inplace=True)
@@ -67,7 +67,7 @@ if 1==0:
     testData = pd.read_csv(csvFilePath, names = ['class', 'handicapped-infants', 'water-project-cost-sharing', 'adoption-of-the-budget-resolution', 'physician-fee-freeze', 'el-salvador-aid', 'religious-groups-in-schools', 'anti-satellite-test-ban', 'aid-to-nicaraguan-contras', 'mx-missile', 'immigration', 'synfuels-corporation-cutback', 'education-spending', 'superfund-right-to-sue', 'crime', 'duty-free-exports', 'export-administration-act-south-africa'])
 
 #Abalone - Regression (PREDICT RINGS)
-if 1==1:
+if 1==0:
     #Abalone - Regression (PREDICT RINGS)
     #SEX[M,F,I] -> sex_m, sex_f, sex_i (one hot encode)
     csvFilePath = 'dataSource/abalone(1)-1.data'
